@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moving Jobs</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#1a2233; --muted:#68718a;
+    --brand:#1f5eff; --brand-ink:#ffffff; --line:#e3e6ee;
+    --ok:#0e9f6e; --ok-bg:#e6f7f1; --warn:#d97706; --danger:#dc2626;
+    --radius:14px; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 14px 80px}
+  header.app{display:flex;align-items:center;gap:10px;padding:14px 2px 10px}
+  header.app .logo{width:38px;height:38px;border-radius:10px;background:var(--brand);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:20px}
+  header.app h1{font-size:20px;margin:0}
+  header.app .sub{font-size:13px;color:var(--muted)}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:26px 0 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:14px;margin-bottom:10px}
+  label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+    font-size:16px;background:#fff;color:var(--ink);font-family:inherit}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+  textarea{min-height:64px;resize:vertical}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{font-family:inherit;font-size:15px;font-weight:600;border:none;border-radius:10px;
+    padding:12px 16px;cursor:pointer;touch-action:manipulation}
+  .btn-primary{background:var(--brand);color:var(--brand-ink);width:100%;margin-top:14px;font-size:16px}
+  .btn-ghost{background:#eef1f6;color:var(--ink);padding:8px 12px;font-size:13px}
+  .btn-danger{background:#fdecec;color:var(--danger);padding:8px 12px;font-size:13px}
+  .btn-ok{background:var(--ok);color:#fff;width:100%;font-size:16px;padding:13px}
+  .btn-undo{background:#eef1f6;color:var(--muted);width:100%;font-size:14px;padding:10px}
+  .day{margin:18px 0 8px;font-size:15px;font-weight:700}
+  .day .badge{font-weight:600;font-size:12px;color:var(--brand);background:#e8efff;
+    border-radius:99px;padding:2px 9px;margin-left:8px;vertical-align:1px}
+  .job{display:flex;gap:12px}
+  .job .time{min-width:62px;text-align:center}
+  .job .time .t{font-size:17px;font-weight:800}
+  .job .time .status{font-size:11px;margin-top:4px;border-radius:99px;padding:2px 7px;display:inline-block}
+  .st-sch{background:#e8efff;color:var(--brand)}
+  .st-done{background:var(--ok-bg);color:var(--ok)}
+  .job .body{flex:1;min-width:0}
+  .job .cust{font-weight:700;font-size:16px}
+  .job .meta{font-size:13.5px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+  .job .who{font-size:12.5px;color:var(--brand);font-weight:600;margin-top:2px}
+  .job .notes{font-size:13.5px;background:#fff8e6;border:1px solid #f3e3b3;color:#7a5a00;
+    border-radius:8px;padding:7px 9px;margin-top:8px;white-space:pre-wrap}
+  .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13.5px;
+    font-weight:600;background:#eef1f6;color:var(--ink);border-radius:99px;padding:8px 13px}
+  .chip.map{background:#e8efff;color:var(--brand)}
+  .chip.tel{background:var(--ok-bg);color:var(--ok)}
+  .emp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .emp .nm{font-weight:700;flex:1}
+  .emp .lnk{font-size:12px;color:var(--muted);width:100%;overflow-wrap:anywhere}
+  .inactive{opacity:.55}
+  .empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:14.5px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);
+    color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .25s;
+    pointer-events:none;z-index:50;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .addrow{display:flex;gap:8px}
+  .addrow input{flex:1}
+  .addrow button{background:var(--brand);color:#fff;padding:0 18px}
+  .topbtns{display:flex;gap:8px;margin:4px 0 0}
+  .done-card{opacity:.62}
+  .worker-hi{font-size:22px;font-weight:800;margin:8px 0 2px}
+  .worker-sub{color:var(--muted);font-size:14px;margin-bottom:6px}
+  .refresh{position:fixed;right:14px;bottom:18px;width:52px;height:52px;border-radius:50%;
+    background:var(--brand);color:#fff;font-size:22px;box-shadow:0 4px 14px rgba(31,94,255,.4);z-index:40}
+  @media(min-width:600px){ .wrap{padding-top:24px} }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty">Loading…</div></div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  var qs = new URLSearchParams(location.search);
+  var KEY = qs.get('key');
+  var TOK = qs.get('t') || qs.get('token');
+  var app = document.getElementById('app');
+  var API = 'https://bpnpeospivgdvgalbpng.supabase.co/functions/v1/app/api/';
+
+  // ---------- helpers ----------
+  function el(tag, cls, txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
+  function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2200); }
+  function api(path, opts){
+    opts = opts || {};
+    var sep = path.indexOf('?')>=0 ? '&' : '?';
+    var auth = KEY ? 'key='+encodeURIComponent(KEY) : 't='+encodeURIComponent(TOK||'');
+    return fetch(API+path+sep+auth, opts).then(function(r){ return r.json(); });
+  }
+  function hm(t){ return t ? t.slice(0,5) : ''; }
+  function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function dayLabel(ds){
+    var today = todayStr();
+    var d = new Date(ds+'T00:00:00');
+    var lbl = d.toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'short'});
+    var t = new Date(today+'T00:00:00');
+    var diff = Math.round((d - t)/86400000);
+    if(diff===0) return {label:lbl, badge:'TODAY'};
+    if(diff===1) return {label:lbl, badge:'TOMORROW'};
+    if(diff<0) return {label:lbl, badge:'PAST'};
+    return {label:lbl, badge:null};
+  }
+  function mapsUrl(job){
+    if(job.maps_link) return job.maps_link;
+    if(job.address) return 'https://maps.google.com/?q='+encodeURIComponent(job.address);
+    return null;
+  }
+  function groupByDate(jobs){
+    var g={}; jobs.forEach(function(j){ (g[j.job_date]=g[j.job_date]||[]).push(j); });
+    return Object.keys(g).sort().map(function(d){ return {date:d, jobs:g[d]}; });
+  }
+
+  // ============================================================
+  // WORKER VIEW
+  // ============================================================
+  if(TOK){
+    function loadWorker(){
+      api('worker').then(function(data){
+        app.innerHTML='';
+        if(data.error){ app.appendChild(el('div','empty','This link is not valid anymore. Please ask your manager for a new link.')); return; }
+        var h = el('div','worker-hi','Hi '+data.name+' 👋');
+        app.appendChild(h);
+        app.appendChild(el('div','worker-sub','Here are your jobs. Tap the address to navigate.'));
+        var today = todayStr();
+        var upcoming = data.jobs.filter(function(j){ return j.job_date >= today; });
+        var past = data.jobs.filter(function(j){ return j.job_date < today; });
+        if(!upcoming.length) app.appendChild(el('div','empty','No jobs scheduled. Enjoy! 🎉'));
+        groupByDate(upcoming).forEach(function(grp){ renderWorkerDay(grp); });
+        if(past.length){
+          var h2 = el('h2',null,'Previous days'); app.appendChild(h2);
+          groupByDate(past).reverse().forEach(function(grp){ renderWorkerDay(grp, true); });
+        }
+        var rb = el('button','refresh','↻'); rb.title='Refresh';
+        rb.onclick=function(){ loadWorker(); };
+        if(!document.querySelector('.refresh'))document.body.appendChild(rb);
+      }).catch(function(){ app.innerHTML=''; app.appendChild(el('div','empty','Could not load. Check your internet and try again.')); });
+    }
+    function renderWorkerDay(grp, isPast){
+      var dl = dayLabel(grp.date);
+      var d = el('div','day',dl.label);
+      if(dl.badge){ d.appendChild(el('span','badge',dl.badge)); }
+      app.appendChild(d);
+      grp.jobs.forEach(function(j){
+        var card = el('div','card job'+(j.status==='done'?' done-card':''));
+        var tm = el('div','time');
+        tm.appendChild(el('div','t',hm(j.start_time)));
+        tm.appendChild(el('span','status '+(j.status==='done'?'st-done':'st-sch'), j.status==='done'?'DONE':'JOB'));
+        card.appendChild(tm);
+        var body = el('div','body');
+        body.appendChild(el('div','cust',j.customer_name));
+        if(j.address) body.appendChild(el('div','meta','📍 '+j.address));
+        if(j.notes) body.appendChild(el('div','notes',j.notes));
+        var act = el('div','actions');
+        var mu = mapsUrl(j);
+        if(mu){ var a=el('a','chip map','🗺 Open in Maps'); a.href=mu; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+        if(j.phone){ var p=el('a','chip tel','📞 '+j.phone); p.href='tel:'+j.phone.replace(/\s+/g,''); act.appendChild(p); }
+        body.appendChild(act);
+        if(!isPast){
+          var btnWrap = el('div'); btnWrap.style.marginTop='10px';
+          var btn;
+          if(j.status==='done'){
+            btn = el('button','btn-undo','↩ Not done yet? Undo');
+            btn.onclick=function(){ mark(j.id,false); };
+          } else {
+            btn = el('button','btn-ok','✓ Mark as done');
+            btn.onclick=function(){ mark(j.id,true); };
+          }
+          btnWrap.appendChild(btn); body.appendChild(btnWrap);
+        }
+        card.appendChild(body);
+        app.appendChild(card);
+      });
+    }
+    function mark(id, done){
+      api('worker/done',{method:'POST',body:JSON.stringify({id:id,done:done})}).then(function(){
+        toast(done?'Nice work! ✓':'Undone'); loadWorker();
+      });
+    }
+    loadWorker();
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) loadWorker(); });
+    return;
+  }
+
+  // ============================================================
+  // ADMIN VIEW
+  // ============================================================
+  if(KEY){
+    var state = {employees:[], jobs:[]};
+    var editingId = null;
+    var showPast = false;
+
+    function load(){
+      api('state'+(showPast?'?past=1':'')).then(function(data){
+        if(data.error){ app.innerHTML=''; app.appendChild(el('div','empty','Wrong admin key.')); return; }
+        state = data; render();
+      });
+    }
+
+    function render(){
+      app.innerHTML='';
+      var hd = el('header','app');
+      var lg = el('div','logo','🚚'); hd.appendChild(lg);
+      var hbox = el('div');
+      var h1 = el('h1',null,'Moving Jobs — Admin'); hbox.appendChild(h1);
+      hbox.appendChild(el('div','sub','Add jobs, assign your team. They see it instantly on their link.'));
+      hd.appendChild(hbox);
+      app.appendChild(hd);
+
+      // ---- Job form ----
+      app.appendChild(el('h2',null, editingId ? 'Edit job' : 'New job'));
+      var f = el('div','card');
+      f.appendChild(field('Date','date','job_date', editingId?null:todayStr()));
+      var r2 = el('div','row2');
+      r2.appendChild(fieldWrap('Start time at customer','time','start_time'));
+      r2.appendChild(fieldWrap('Assign to','select','employee_id'));
+      f.appendChild(r2);
+      f.appendChild(field('Customer name','text','customer_name',null,'e.g. Mrs. Georgiou'));
+      f.appendChild(field('Phone number','tel','phone',null,'+357 99 ...'));
+      f.appendChild(field('Google Maps link','url','maps_link',null,'paste link from Google Maps'));
+      f.appendChild(field('Address (shown to worker)','text','address',null,'street, city'));
+      f.appendChild(field('Notes','textarea','notes',null,'e.g. 3rd floor, no elevator, piano'));
+      var save = el('button','btn-primary', editingId?'Save changes':'+ Add job');
+      save.onclick=submitJob;
+      f.appendChild(save);
+      if(editingId){
+        var cancel = el('button','btn-undo','Cancel editing'); cancel.style.marginTop='8px';
+        cancel.onclick=function(){ editingId=null; render(); };
+        f.appendChild(cancel);
+      }
+      app.appendChild(f);
+      fillEmployeeSelect();
+      if(editingId){ var j = state.jobs.find(function(x){return x.id===editingId;}); if(j) fillForm(j); }
+
+      // ---- Jobs list ----
+      var jh = el('h2',null,'Scheduled jobs');
+      app.appendChild(jh);
+      var tb = el('div','topbtns');
+      var pastBtn = el('button','btn-ghost', showPast?'Hide past jobs':'Show past jobs');
+      pastBtn.onclick=function(){ showPast=!showPast; load(); };
+      tb.appendChild(pastBtn);
+      app.appendChild(tb);
+      if(!state.jobs.length) app.appendChild(el('div','empty','No jobs yet. Add the first one above. ☝️'));
+      groupByDate(state.jobs).forEach(function(grp){
+        var dl = dayLabel(grp.date);
+        var d = el('div','day',dl.label);
+        if(dl.badge) d.appendChild(el('span','badge',dl.badge));
+        app.appendChild(d);
+        grp.jobs.forEach(function(j){ app.appendChild(adminJobCard(j)); });
+      });
+
+      // ---- Employees ----
+      app.appendChild(el('h2',null,'Team members'));
+      var ec = el('div','card');
+      var ar = el('div','addrow');
+      var inp = el('input'); inp.placeholder='Name of new team member'; inp.id='new-emp';
+      var ab = el('button',null,'Add');
+      ab.onclick=function(){
+        var n = inp.value.trim(); if(!n) return;
+        api('employees',{method:'POST',body:JSON.stringify({name:n})}).then(function(){ toast('Added ✓'); load(); });
+      };
+      ar.appendChild(inp); ar.appendChild(ab);
+      ec.appendChild(ar);
+      ec.appendChild(el('div','sub','Each member gets a personal link — send it once via WhatsApp/SMS. They open it and always see their jobs. Tip: they can add it to their home screen.'));
+      app.appendChild(ec);
+      state.employees.forEach(function(e){
+        var c = el('div','card emp'+(e.active?'':' inactive'));
+        c.appendChild(el('div','nm',e.name + (e.active?'':' (inactive)')));
+        var link = location.origin+location.pathname+'?t='+e.token;
+        var cp = el('button','btn-ghost','Copy link');
+        cp.onclick=function(){
+          navigator.clipboard.writeText(link).then(function(){ toast('Link copied — send it to '+e.name); });
+        };
+        c.appendChild(cp);
+        var tg = el('button', e.active?'btn-danger':'btn-ghost', e.active?'Deactivate':'Activate');
+        tg.onclick=function(){
+          api('employees/update',{method:'POST',body:JSON.stringify({id:e.id,active:!e.active})}).then(load);
+        };
+        c.appendChild(tg);
+        c.appendChild(el('div','lnk',link));
+        app.appendChild(c);
+      });
+    }
+
+    function adminJobCard(j){
+      var card = el('div','card job'+(j.status==='done'?' done-card':''));
+      var tm = el('div','time');
+      tm.appendChild(el('div','t',hm(j.start_time)));
+      tm.appendChild(el('span','status '+(j.status==='done'?'st-done':'st-sch'), j.status==='done'?'DONE':'OPEN'));
+      card.appendChild(tm);
+      var body = el('div','body');
+      body.appendChild(el('div','cust',j.customer_name));
+      var emp = state.employees.find(function(e){return e.id===j.employee_id;});
+      body.appendChild(el('div','who', emp ? '👷 '+emp.name : '⚠️ Not assigned'));
+      if(j.address) body.appendChild(el('div','meta','📍 '+j.address));
+      if(j.phone) body.appendChild(el('div','meta','📞 '+j.phone));
+      if(j.notes) body.appendChild(el('div','notes',j.notes));
+      var act = el('div','actions');
+      var mu = mapsUrl(j);
+      if(mu){ var a=el('a','chip map','🗺 Maps'); a.href=mu; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+      var eb = el('button','btn-ghost','✏️ Edit');
+      eb.onclick=function(){ editingId=j.id; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+      act.appendChild(eb);
+      var db = el('button','btn-danger','Delete');
+      db.onclick=function(){
+        if(db.dataset.armed){ api('jobs/delete',{method:'POST',body:JSON.stringify({id:j.id})}).then(function(){ toast('Deleted'); load(); }); }
+        else { db.dataset.armed='1'; db.textContent='Really delete?'; setTimeout(function(){ delete db.dataset.armed; db.textContent='Delete'; },3000); }
+      };
+      act.appendChild(db);
+      body.appendChild(act);
+      card.appendChild(body);
+      return card;
+    }
+
+    function field(lbl,type,id,val,ph){
+      var w = el('div');
+      w.appendChild(el('label',null,lbl));
+      var i;
+      if(type==='textarea'){ i = el('textarea'); }
+      else { i = el('input'); i.type=type; }
+      i.id='f-'+id; if(val)i.value=val; if(ph)i.placeholder=ph;
+      w.appendChild(i);
+      return w;
+    }
+    function fieldWrap(lbl,type,id){
+      if(type==='select'){
+        var w = el('div');
+        w.appendChild(el('label',null,lbl));
+        var s = el('select'); s.id='f-'+id;
+        w.appendChild(s);
+        return w;
+      }
+      return field(lbl,type,id);
+    }
+    function fillEmployeeSelect(){
+      var s = document.getElementById('f-employee_id'); if(!s) return;
+      s.innerHTML='';
+      var o0 = el('option',null,'— choose —'); o0.value=''; s.appendChild(o0);
+      state.employees.filter(function(e){return e.active;}).forEach(function(e){
+        var o = el('option',null,e.name); o.value=e.id; s.appendChild(o);
+      });
+    }
+    function fillForm(j){
+      ['job_date','start_time','customer_name','phone','maps_link','address','notes','employee_id'].forEach(function(k){
+        var i = document.getElementById('f-'+k); if(i) i.value = j[k]||'';
+      });
+      var st = document.getElementById('f-start_time'); if(st && j.start_time) st.value = j.start_time.slice(0,5);
+    }
+    function submitJob(){
+      var get = function(k){ var i=document.getElementById('f-'+k); return i?i.value.trim():''; };
+      var b = {
+        id: editingId,
+        job_date: get('job_date'), start_time: get('start_time'),
+        customer_name: get('customer_name'), phone: get('phone'),
+        maps_link: get('maps_link'), address: get('address'),
+        notes: get('notes'), employee_id: get('employee_id'),
+      };
+      if(!b.job_date || !b.start_time || !b.customer_name){ toast('Please fill date, time and customer name'); return; }
+      api('jobs',{method:'POST',body:JSON.stringify(b)}).then(function(r){
+        if(r.error){ toast('Error — please try again'); return; }
+        toast(editingId?'Saved ✓':'Job added ✓'); editingId=null; load();
+      });
+    }
+    load();
+    return;
+  }
+
+  // no key, no token
+  app.innerHTML='';
+  app.appendChild(el('div','empty','Moving Jobs — please open the app with your personal link.'));
+})();
+</script>
+</body>
+</html>
