@@ -56,6 +56,7 @@
   .chip{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13.5px;
     font-weight:600;background:#eef1f6;color:var(--ink);border-radius:99px;padding:8px 13px}
   .chip.map{background:#e8efff;color:var(--brand)}
+  .chip.route{background:#1f5eff;color:#fff}
   .chip.tel{background:var(--ok-bg);color:var(--ok)}
   .emp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .emp .nm{font-weight:700;flex:1}
@@ -75,6 +76,12 @@
   .worker-sub{color:var(--muted);font-size:14px;margin-bottom:6px}
   .refresh{position:fixed;right:14px;bottom:18px;width:52px;height:52px;border-radius:50%;
     background:var(--brand);color:#fff;font-size:22px;box-shadow:0 4px 14px rgba(31,94,255,.4);z-index:40}
+  .stoprow{border:1px dashed #c9d1e0;border-radius:12px;padding:10px 12px 12px;margin-top:8px;background:#fafbfd}
+  .stoprow .sr-head{display:flex;gap:8px;align-items:center}
+  .stoprow .sr-head select{flex:1}
+  .stoprow .sr-x{background:#fdecec;color:var(--danger);padding:9px 13px;font-size:14px;border-radius:10px}
+  .stoprow input{margin-top:8px}
+  .addstop{background:#e8efff;color:var(--brand);width:100%;margin-top:8px;font-size:14px;padding:10px}
   @media(min-width:600px){ .wrap{padding-top:24px} }
 </style>
 </head>
@@ -88,6 +95,7 @@
   var TOK = qs.get('t') || qs.get('token');
   var app = document.getElementById('app');
   var API = 'https://bpnpeospivgdvgalbpng.supabase.co/functions/v1/app/api/';
+  var STOP_ICONS = {Pickup:'📦', Delivery:'🏠', Stop:'📍'};
 
   // ---------- helpers ----------
   function el(tag, cls, txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
@@ -111,10 +119,36 @@
     if(diff<0) return {label:lbl, badge:'PAST'};
     return {label:lbl, badge:null};
   }
-  function mapsUrl(job){
-    if(job.maps_link) return job.maps_link;
-    if(job.address) return 'https://maps.google.com/?q='+encodeURIComponent(job.address);
+  function stopIcon(lb){ return STOP_ICONS[lb] || '📍'; }
+  function jobStops(j){
+    if(j.stops && j.stops.length) return j.stops;
+    if(j.address || j.maps_link) return [{label:'Stop', address:j.address||'', maps_link:j.maps_link||''}];
+    return [];
+  }
+  function stopMapsUrl(s){
+    if(s.maps_link) return s.maps_link;
+    if(s.address) return 'https://maps.google.com/?q='+encodeURIComponent(s.address);
     return null;
+  }
+  function routeUrl(stops){
+    var addrs = stops.filter(function(s){return s.address;}).map(function(s){return encodeURIComponent(s.address);});
+    if(addrs.length < 2) return null;
+    var u = 'https://www.google.com/maps/dir/?api=1&origin='+addrs[0]+'&destination='+addrs[addrs.length-1];
+    if(addrs.length > 2) u += '&waypoints='+addrs.slice(1,-1).join('%7C');
+    return u;
+  }
+  function appendStopInfo(body, act, j){
+    var stops = jobStops(j);
+    stops.forEach(function(s){
+      var line = stopIcon(s.label)+' '+s.label+(s.address ? ': '+s.address : '');
+      body.appendChild(el('div','meta',line));
+    });
+    stops.forEach(function(s){
+      var u = stopMapsUrl(s);
+      if(u){ var a=el('a','chip map','🗺 '+s.label); a.href=u; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+    });
+    var ru = routeUrl(stops);
+    if(ru){ var r=el('a','chip route','🚚 Full route'); r.href=ru; r.target='_blank'; r.rel='noopener'; act.appendChild(r); }
   }
   function groupByDate(jobs){
     var g={}; jobs.forEach(function(j){ (g[j.job_date]=g[j.job_date]||[]).push(j); });
@@ -131,7 +165,7 @@
         if(data.error){ app.appendChild(el('div','empty','This link is not valid anymore. Please ask your manager for a new link.')); return; }
         var h = el('div','worker-hi','Hi '+data.name+' 👋');
         app.appendChild(h);
-        app.appendChild(el('div','worker-sub','Here are your jobs. Tap the address to navigate.'));
+        app.appendChild(el('div','worker-sub','Here are your jobs. Tap a location to navigate.'));
         var today = todayStr();
         var upcoming = data.jobs.filter(function(j){ return j.job_date >= today; });
         var past = data.jobs.filter(function(j){ return j.job_date < today; });
@@ -143,7 +177,7 @@
         }
         var rb = el('button','refresh','↻'); rb.title='Refresh';
         rb.onclick=function(){ loadWorker(); };
-        if(!document.querySelector('.refresh'))document.body.appendChild(rb);
+        if(!document.querySelector('.refresh')) document.body.appendChild(rb);
       }).catch(function(){ app.innerHTML=''; app.appendChild(el('div','empty','Could not load. Check your internet and try again.')); });
     }
     function renderWorkerDay(grp, isPast){
@@ -159,11 +193,9 @@
         card.appendChild(tm);
         var body = el('div','body');
         body.appendChild(el('div','cust',j.customer_name));
-        if(j.address) body.appendChild(el('div','meta','📍 '+j.address));
-        if(j.notes) body.appendChild(el('div','notes',j.notes));
         var act = el('div','actions');
-        var mu = mapsUrl(j);
-        if(mu){ var a=el('a','chip map','🗺 Open in Maps'); a.href=mu; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+        appendStopInfo(body, act, j);
+        if(j.notes) body.appendChild(el('div','notes',j.notes));
         if(j.phone){ var p=el('a','chip tel','📞 '+j.phone); p.href='tel:'+j.phone.replace(/\s+/g,''); act.appendChild(p); }
         body.appendChild(act);
         if(!isPast){
@@ -199,6 +231,9 @@
     var state = {employees:[], jobs:[]};
     var editingId = null;
     var showPast = false;
+    var stopsData = null;
+
+    function defaultStops(){ return [{label:'Pickup',address:'',maps_link:''},{label:'Delivery',address:'',maps_link:''}]; }
 
     function load(){
       api('state'+(showPast?'?past=1':'')).then(function(data){
@@ -217,6 +252,16 @@
       hd.appendChild(hbox);
       app.appendChild(hd);
 
+      // stops for the form
+      if(editingId){
+        var ej0 = state.jobs.find(function(x){return x.id===editingId;});
+        if(ej0 && ej0.stops && ej0.stops.length) stopsData = JSON.parse(JSON.stringify(ej0.stops));
+        else if(ej0 && (ej0.address || ej0.maps_link)) stopsData = [{label:'Pickup',address:ej0.address||'',maps_link:ej0.maps_link||''},{label:'Delivery',address:'',maps_link:''}];
+        else stopsData = defaultStops();
+      } else {
+        stopsData = defaultStops();
+      }
+
       // ---- Job form ----
       app.appendChild(el('h2',null, editingId ? 'Edit job' : 'New job'));
       var f = el('div','card');
@@ -227,8 +272,17 @@
       f.appendChild(r2);
       f.appendChild(field('Customer name','text','customer_name',null,'e.g. Mrs. Georgiou'));
       f.appendChild(field('Phone number','tel','phone',null,'+357 99 ...'));
-      f.appendChild(field('Google Maps link','url','maps_link',null,'paste link from Google Maps'));
-      f.appendChild(field('Address (shown to worker)','text','address',null,'street, city'));
+
+      // ---- Locations editor ----
+      var sw = el('div');
+      sw.appendChild(el('label',null,'Locations (pickup → delivery)'));
+      var sb = el('div'); sb.id='stops-box';
+      sw.appendChild(sb);
+      var addBtn = el('button','addstop','+ Add another location');
+      addBtn.onclick=function(){ stopsData.push({label:'Stop',address:'',maps_link:''}); renderStops(); };
+      sw.appendChild(addBtn);
+      f.appendChild(sw);
+
       f.appendChild(field('Notes','textarea','notes',null,'e.g. 3rd floor, no elevator, piano'));
       var save = el('button','btn-primary', editingId?'Save changes':'+ Add job');
       save.onclick=submitJob;
@@ -240,7 +294,8 @@
       }
       app.appendChild(f);
       fillEmployeeSelect();
-      if(editingId){ var j = state.jobs.find(function(x){return x.id===editingId;}); if(j) fillForm(j); }
+      renderStops();
+      if(editingId){ var ej = state.jobs.find(function(x){return x.id===editingId;}); if(ej) fillForm(ej); }
 
       // ---- Jobs list ----
       var jh = el('h2',null,'Scheduled jobs');
@@ -292,6 +347,36 @@
       });
     }
 
+    function renderStops(){
+      var sb = document.getElementById('stops-box'); if(!sb) return;
+      sb.innerHTML='';
+      stopsData.forEach(function(s, i){
+        var row = el('div','stoprow');
+        var head = el('div','sr-head');
+        var sel = el('select');
+        ['Pickup','Delivery','Stop'].forEach(function(o){
+          var op = el('option',null, o==='Stop' ? 'Extra stop' : o); op.value=o; sel.appendChild(op);
+        });
+        sel.value = s.label || 'Stop';
+        sel.onchange=function(){ stopsData[i].label = sel.value; };
+        head.appendChild(sel);
+        if(stopsData.length > 1){
+          var x = el('button','sr-x','✕');
+          x.title='Remove this location';
+          x.onclick=function(){ stopsData.splice(i,1); renderStops(); };
+          head.appendChild(x);
+        }
+        row.appendChild(head);
+        var ad = el('input'); ad.type='text'; ad.placeholder='Address (street, city)'; ad.value=s.address||'';
+        ad.oninput=function(){ stopsData[i].address = ad.value; };
+        row.appendChild(ad);
+        var ml = el('input'); ml.type='url'; ml.placeholder='Google Maps link (optional)'; ml.value=s.maps_link||'';
+        ml.oninput=function(){ stopsData[i].maps_link = ml.value; };
+        row.appendChild(ml);
+        sb.appendChild(row);
+      });
+    }
+
     function adminJobCard(j){
       var card = el('div','card job'+(j.status==='done'?' done-card':''));
       var tm = el('div','time');
@@ -302,21 +387,19 @@
       body.appendChild(el('div','cust',j.customer_name));
       var emp = state.employees.find(function(e){return e.id===j.employee_id;});
       body.appendChild(el('div','who', emp ? '👷 '+emp.name : '⚠️ Not assigned'));
-      if(j.address) body.appendChild(el('div','meta','📍 '+j.address));
       if(j.phone) body.appendChild(el('div','meta','📞 '+j.phone));
-      if(j.notes) body.appendChild(el('div','notes',j.notes));
       var act = el('div','actions');
-      var mu = mapsUrl(j);
-      if(mu){ var a=el('a','chip map','🗺 Maps'); a.href=mu; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+      appendStopInfo(body, act, j);
+      if(j.notes) body.appendChild(el('div','notes',j.notes));
       var eb = el('button','btn-ghost','✏️ Edit');
       eb.onclick=function(){ editingId=j.id; render(); window.scrollTo({top:0,behavior:'smooth'}); };
       act.appendChild(eb);
-      var db = el('button','btn-danger','Delete');
-      db.onclick=function(){
-        if(db.dataset.armed){ api('jobs/delete',{method:'POST',body:JSON.stringify({id:j.id})}).then(function(){ toast('Deleted'); load(); }); }
-        else { db.dataset.armed='1'; db.textContent='Really delete?'; setTimeout(function(){ delete db.dataset.armed; db.textContent='Delete'; },3000); }
+      var delBtn = el('button','btn-danger','Delete');
+      delBtn.onclick=function(){
+        if(delBtn.dataset.armed){ api('jobs/delete',{method:'POST',body:JSON.stringify({id:j.id})}).then(function(){ toast('Deleted'); load(); }); }
+        else { delBtn.dataset.armed='1'; delBtn.textContent='Really delete?'; setTimeout(function(){ delete delBtn.dataset.armed; delBtn.textContent='Delete'; },3000); }
       };
-      act.appendChild(db);
+      act.appendChild(delBtn);
       body.appendChild(act);
       card.appendChild(body);
       return card;
@@ -351,18 +434,20 @@
       });
     }
     function fillForm(j){
-      ['job_date','start_time','customer_name','phone','maps_link','address','notes','employee_id'].forEach(function(k){
+      ['job_date','start_time','customer_name','phone','notes','employee_id'].forEach(function(k){
         var i = document.getElementById('f-'+k); if(i) i.value = j[k]||'';
       });
       var st = document.getElementById('f-start_time'); if(st && j.start_time) st.value = j.start_time.slice(0,5);
     }
     function submitJob(){
       var get = function(k){ var i=document.getElementById('f-'+k); return i?i.value.trim():''; };
+      var stops = stopsData.filter(function(s){ return (s.address&&s.address.trim()) || (s.maps_link&&s.maps_link.trim()); })
+        .map(function(s){ return {label:s.label||'Stop', address:(s.address||'').trim(), maps_link:(s.maps_link||'').trim()}; });
       var b = {
         id: editingId,
         job_date: get('job_date'), start_time: get('start_time'),
         customer_name: get('customer_name'), phone: get('phone'),
-        maps_link: get('maps_link'), address: get('address'),
+        stops: stops,
         notes: get('notes'), employee_id: get('employee_id'),
       };
       if(!b.job_date || !b.start_time || !b.customer_name){ toast('Please fill date, time and customer name'); return; }
