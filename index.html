@@ -125,13 +125,22 @@
     if(j.address || j.maps_link) return [{label:'Stop', address:j.address||'', maps_link:j.maps_link||''}];
     return [];
   }
+  function normLink(v){
+    v = (v||'').trim();
+    if(!v) return null;
+    if(/^https?:\/\//i.test(v)) return v;
+    return 'https://maps.google.com/?q='+encodeURIComponent(v);
+  }
+  function stopText(s){
+    if(s.address) return s.address;
+    if(s.maps_link && !/^https?:\/\//i.test(s.maps_link)) return s.maps_link.trim();
+    return '';
+  }
   function stopMapsUrl(s){
-    if(s.maps_link) return s.maps_link;
-    if(s.address) return 'https://maps.google.com/?q='+encodeURIComponent(s.address);
-    return null;
+    return normLink(s.maps_link) || normLink(s.address);
   }
   function routeUrl(stops){
-    var addrs = stops.filter(function(s){return s.address;}).map(function(s){return encodeURIComponent(s.address);});
+    var addrs = stops.map(stopText).filter(Boolean).map(encodeURIComponent);
     if(addrs.length < 2) return null;
     var u = 'https://www.google.com/maps/dir/?api=1&origin='+addrs[0]+'&destination='+addrs[addrs.length-1];
     if(addrs.length > 2) u += '&waypoints='+addrs.slice(1,-1).join('%7C');
@@ -140,7 +149,8 @@
   function appendStopInfo(body, act, j){
     var stops = jobStops(j);
     stops.forEach(function(s){
-      var line = stopIcon(s.label)+' '+s.label+(s.address ? ': '+s.address : '');
+      var txt = stopText(s);
+      var line = stopIcon(s.label)+' '+s.label+(txt ? ': '+txt : '');
       body.appendChild(el('div','meta',line));
     });
     stops.forEach(function(s){
@@ -370,7 +380,7 @@
         var ad = el('input'); ad.type='text'; ad.placeholder='Address (street, city)'; ad.value=s.address||'';
         ad.oninput=function(){ stopsData[i].address = ad.value; };
         row.appendChild(ad);
-        var ml = el('input'); ml.type='url'; ml.placeholder='Google Maps link (optional)'; ml.value=s.maps_link||'';
+        var ml = el('input'); ml.type='url'; ml.placeholder='Google Maps link, plus code or coordinates'; ml.value=s.maps_link||'';
         ml.oninput=function(){ stopsData[i].maps_link = ml.value; };
         row.appendChild(ml);
         sb.appendChild(row);
