@@ -82,6 +82,14 @@
   .stoprow .sr-x{background:#fdecec;color:var(--danger);padding:9px 13px;font-size:14px;border-radius:10px}
   .stoprow input{margin-top:8px}
   .addstop{background:#e8efff;color:var(--brand);width:100%;margin-top:8px;font-size:14px;padding:10px}
+  .stops{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+  .stopline{display:flex;align-items:center;gap:10px;background:#f2f6ff;border:1px solid #dbe5ff;
+    border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink)}
+  .stopline .sl-ic{font-size:18px}
+  .stopline .sl-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+  .stopline .sl-lb{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brand)}
+  .stopline .sl-ad{font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+  .stopline .sl-go{color:var(--brand);font-size:22px;font-weight:700}
   @media(min-width:600px){ .wrap{padding-top:24px} }
 </style>
 </head>
@@ -148,15 +156,21 @@
   }
   function appendStopInfo(body, act, j){
     var stops = jobStops(j);
+    var box = el('div','stops');
     stops.forEach(function(s){
       var txt = stopText(s);
-      var line = stopIcon(s.label)+' '+s.label+(txt ? ': '+txt : '');
-      body.appendChild(el('div','meta',line));
-    });
-    stops.forEach(function(s){
       var u = stopMapsUrl(s);
-      if(u){ var a=el('a','chip map','🗺 '+s.label); a.href=u; a.target='_blank'; a.rel='noopener'; act.appendChild(a); }
+      var row = el(u ? 'a' : 'div','stopline');
+      if(u){ row.href=u; row.target='_blank'; row.rel='noopener'; }
+      row.appendChild(el('span','sl-ic',stopIcon(s.label)));
+      var tx = el('span','sl-tx');
+      tx.appendChild(el('span','sl-lb',s.label));
+      tx.appendChild(el('span','sl-ad', txt || 'Open in Google Maps'));
+      row.appendChild(tx);
+      if(u) row.appendChild(el('span','sl-go','›'));
+      box.appendChild(row);
     });
+    body.appendChild(box);
     var ru = routeUrl(stops);
     if(ru){ var r=el('a','chip route','🚚 Full route'); r.href=ru; r.target='_blank'; r.rel='noopener'; act.appendChild(r); }
   }
@@ -241,9 +255,10 @@
     var state = {employees:[], jobs:[]};
     var editingId = null;
     var showPast = false;
+    var formOpen = false;
     var stopsData = null;
 
-    function defaultStops(){ return [{label:'Pickup',address:'',maps_link:''},{label:'Delivery',address:'',maps_link:''}]; }
+    function defaultStops(){ return [{label:'Pickup',value:''},{label:'Delivery',value:''}]; }
 
     function load(){
       api('state'+(showPast?'?past=1':'')).then(function(data){
@@ -265,14 +280,19 @@
       // stops for the form
       if(editingId){
         var ej0 = state.jobs.find(function(x){return x.id===editingId;});
-        if(ej0 && ej0.stops && ej0.stops.length) stopsData = JSON.parse(JSON.stringify(ej0.stops));
-        else if(ej0 && (ej0.address || ej0.maps_link)) stopsData = [{label:'Pickup',address:ej0.address||'',maps_link:ej0.maps_link||''},{label:'Delivery',address:'',maps_link:''}];
+        if(ej0 && ej0.stops && ej0.stops.length) stopsData = ej0.stops.map(function(s){ return {label:s.label||'Stop', value:(s.maps_link||s.address||'')}; });
+        else if(ej0 && (ej0.address || ej0.maps_link)) stopsData = [{label:'Pickup',value:(ej0.maps_link||ej0.address||'')},{label:'Delivery',value:''}];
         else stopsData = defaultStops();
       } else {
         stopsData = defaultStops();
       }
 
       // ---- Job form ----
+      if(!editingId && !formOpen){
+        var nb = el('button','btn-primary','＋ New job');
+        nb.onclick=function(){ formOpen=true; render(); };
+        app.appendChild(nb);
+      } else {
       app.appendChild(el('h2',null, editingId ? 'Edit job' : 'New job'));
       var f = el('div','card');
       f.appendChild(field('Date','date','job_date', editingId?null:todayStr()));
@@ -297,15 +317,15 @@
       var save = el('button','btn-primary', editingId?'Save changes':'+ Add job');
       save.onclick=submitJob;
       f.appendChild(save);
-      if(editingId){
-        var cancel = el('button','btn-undo','Cancel editing'); cancel.style.marginTop='8px';
-        cancel.onclick=function(){ editingId=null; render(); };
-        f.appendChild(cancel);
-      }
+      var cancel = el('button','btn-undo', editingId ? 'Cancel editing' : 'Close');
+      cancel.style.marginTop='8px';
+      cancel.onclick=function(){ editingId=null; formOpen=false; render(); };
+      f.appendChild(cancel);
       app.appendChild(f);
       fillEmployeeSelect();
       renderStops();
       if(editingId){ var ej = state.jobs.find(function(x){return x.id===editingId;}); if(ej) fillForm(ej); }
+      }
 
       // ---- Jobs list ----
       var jh = el('h2',null,'Scheduled jobs');
@@ -377,12 +397,9 @@
           head.appendChild(x);
         }
         row.appendChild(head);
-        var ad = el('input'); ad.type='text'; ad.placeholder='Address (street, city)'; ad.value=s.address||'';
-        ad.oninput=function(){ stopsData[i].address = ad.value; };
+        var ad = el('input'); ad.type='text'; ad.placeholder='Paste Google Maps link OR type address'; ad.value=s.value||'';
+        ad.oninput=function(){ stopsData[i].value = ad.value; };
         row.appendChild(ad);
-        var ml = el('input'); ml.type='url'; ml.placeholder='Google Maps link, plus code or coordinates'; ml.value=s.maps_link||'';
-        ml.oninput=function(){ stopsData[i].maps_link = ml.value; };
-        row.appendChild(ml);
         sb.appendChild(row);
       });
     }
@@ -451,8 +468,12 @@
     }
     function submitJob(){
       var get = function(k){ var i=document.getElementById('f-'+k); return i?i.value.trim():''; };
-      var stops = stopsData.filter(function(s){ return (s.address&&s.address.trim()) || (s.maps_link&&s.maps_link.trim()); })
-        .map(function(s){ return {label:s.label||'Stop', address:(s.address||'').trim(), maps_link:(s.maps_link||'').trim()}; });
+      var stops = stopsData.filter(function(s){ return s.value && s.value.trim(); })
+        .map(function(s){
+          var v = s.value.trim();
+          if(/^https?:\/\//i.test(v)) return {label:s.label||'Stop', address:'', maps_link:v};
+          return {label:s.label||'Stop', address:v, maps_link:''};
+        });
       var b = {
         id: editingId,
         job_date: get('job_date'), start_time: get('start_time'),
@@ -463,7 +484,7 @@
       if(!b.job_date || !b.start_time || !b.customer_name){ toast('Please fill date, time and customer name'); return; }
       api('jobs',{method:'POST',body:JSON.stringify(b)}).then(function(r){
         if(r.error){ toast('Error — please try again'); return; }
-        toast(editingId?'Saved ✓':'Job added ✓'); editingId=null; load();
+        toast(editingId?'Saved ✓':'Job added ✓'); editingId=null; formOpen=false; load();
       });
     }
     load();
