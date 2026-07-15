@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Moving Jobs</title>
+<title>Klein Jobs</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f5eff">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAEWElEQVR4nO3cbVbbSBCGUZmTfcysLFlbWNmwksyPHBJCLFsfLanr7XsXADqlh6JljG9TB/75+uPH1dfAfm+vt9vV13DJBQh4DFcEfto3FPHYzor70G8iYu45Mu5DvrCQWeKIsF9af0Exs9QRrTT7CREye7Ta1k02tJjZq1VDu34qhMwR9mzrzRtazBxlT1ubghYzR9va2OqgxcxZtrS2Kmgxc7a1zS0OWsxcZU17i4IWM1db2uDToMVML5a02PxP33Clh0HbzvTmWZOzQYuZXj1q05GDKHeDtp3p3VyjfwUtZqq416ojB1H+CNp2pprPzdrQRBE0UX4F7bhBVR/btaGJImiivEyT4wb1vTdsQxNF0EQRNFFuzs8ksaGJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKIImiiCJsqXqy/gs/++X30F/fj329VXUE83n+Av5HnCXs6RgyhdBG07P2Y+y3URNLQiaKIImiiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKJ09x8rPNbLW0l7/aeDLv5jpZebxHq9he3IQRRBs0tvv10FTRRBE8WrHMW1eijr7eiwlQ1dWMtXGHp7tWIrQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0IW1fMtnyttHvR+6uJQQW7GhiSJoogiaKIImiqCJImiiCJoogiaKoIkiaKJ0EXTKp/Ycpef59HZtXQQNrXTxCf4febPNb/e2Xy/z6W0zv+su6Gda3NBeb0ZLo86p1JGj1XbqZcsdZeQ5ldnQz4a75ddzxQ30zOhzKrWh58wNvNKNOMMIcyof9LObkXSz9hhlTiWCPuosV/GM+Ig5FQl6ztKtkrJ9thppTqWDhs8ETRRBE6V00EsfVio91BxhpDmVCPqoh5WEh6CPzKlI0I882yoJW6eFUeZUPuhpmr8ZKTeplRHmVOa9HNPUdvCVfo2uNfKcSm3oVsOtdpPWGnlOpYKepv1DrniTthh1TuWCnqbtw656k7YacU4lg56m9UOvfJP2GG1OpR4K5zx6CKp+g1oaYU4RQcO7skcOuEfQRBE0UQRNFEETRdBEeXl7vd2uvgho4e31drOhiSJoogiaKC/T9PPscfWFwB7vDdvQRBE0UX4F7dhBVR/btaGJImii/BG0YwfVfG7WhibKX0Hb0lRxr9W7G1rU9G6uUUcOoswGbUvTq0dtPtzQoqY3z5p05CDK06BtaXqxpMVFG1rUXG1pg4uPHKLmKmvaW3WGFjVnW9vc6odCUXOWLa1tepVD1Bxta2ObX7YTNUfZ01aTKH3GNC20WJJN/rBiW7NXq4aah2hbs0brZdj8T9+2NUsd0cqh8dnW3HPk0jttm4p7bGf95r7keCDuMVxx/OzivCvwDD08P/0PhtwqPMCFRoYAAAAASUVORK5CYII=">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Klein Jobs">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root{
     --bg:#f4f5f7; --card:#ffffff; --ink:#1a2233; --muted:#68718a;
@@ -84,6 +91,30 @@
   .addstop{background:#e8efff;color:var(--brand);width:100%;margin-top:8px;font-size:14px;padding:10px}
   .bellbtn{width:100%;background:#fff4d6;color:#8a6400;border:1px solid #f0dfa8;font-size:14px;
     padding:11px;margin:4px 0 10px;border-radius:12px}
+  .hero{background:linear-gradient(135deg,#1f5eff,#4a7bff);color:#fff;border-radius:18px;
+    padding:18px;margin:8px 0 16px;box-shadow:0 6px 22px rgba(31,94,255,.38)}
+  .hero .hl{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;opacity:.9}
+  .hero .hwhen{font-size:14px;opacity:.92;margin-top:6px}
+  .hero .htime{font-size:38px;font-weight:800;line-height:1.05;margin:2px 0 2px}
+  .hero .hcust{font-size:21px;font-weight:700}
+  .hero .hstop{display:flex;gap:9px;align-items:center;background:rgba(255,255,255,.16);
+    border-radius:12px;padding:10px 13px;margin-top:8px;text-decoration:none;color:#fff}
+  .hero .hstop .hi{font-size:18px}
+  .hero .hstop .ht{flex:1;min-width:0}
+  .hero .hstop .hlab{font-size:11px;font-weight:700;text-transform:uppercase;opacity:.85}
+  .hero .hstop .had{font-size:14.5px;overflow-wrap:anywhere}
+  .hero .hstop .harr{font-size:20px;font-weight:700;opacity:.9}
+  .hero .hnotes{font-size:14px;background:rgba(255,255,255,.16);border-radius:10px;
+    padding:9px 12px;margin-top:8px;white-space:pre-wrap}
+  .hero .hnav{display:block;background:#fff;color:#1f5eff;text-align:center;font-weight:800;
+    font-size:17px;padding:15px;border-radius:12px;margin-top:12px;text-decoration:none}
+  .hero .hrow{display:flex;gap:8px;margin-top:8px}
+  .hero .hrow a,.hero .hrow button{flex:1;text-align:center;background:rgba(255,255,255,.18);
+    color:#fff;border:none;font-weight:700;font-size:15px;padding:12px;border-radius:12px;text-decoration:none}
+  .hero .hdone{width:100%;background:#0e9f6e;color:#fff;border:none;font-weight:800;font-size:16px;
+    padding:14px;border-radius:12px;margin-top:8px}
+  .laterhead{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);margin:20px 0 4px}
   .stops{margin-top:8px;display:flex;flex-direction:column;gap:6px}
   .stopline{display:flex;align-items:center;gap:10px;background:#f2f6ff;border:1px solid #dbe5ff;
     border-radius:12px;padding:10px 12px;text-decoration:none;color:var(--ink)}
@@ -103,6 +134,14 @@
   var qs = new URLSearchParams(location.search);
   var KEY = qs.get('key');
   var TOK = qs.get('t') || qs.get('token');
+  try {
+    if(KEY){ localStorage.setItem('kj_key', KEY); }
+    else if(TOK){ localStorage.setItem('kj_tok', TOK); }
+    else {
+      TOK = localStorage.getItem('kj_tok');
+      if(!TOK){ KEY = localStorage.getItem('kj_key'); }
+    }
+  } catch(e){}
   var app = document.getElementById('app');
   var API = 'https://bpnpeospivgdvgalbpng.supabase.co/functions/v1/app/api/';
   var STOP_ICONS = {Pickup:'📦', Delivery:'🏠', Stop:'📍'};
@@ -235,8 +274,15 @@
         var today = todayStr();
         var upcoming = data.jobs.filter(function(j){ return j.job_date >= today; });
         var past = data.jobs.filter(function(j){ return j.job_date < today; });
-        if(!upcoming.length) app.appendChild(el('div','empty','No jobs scheduled. Enjoy! 🎉'));
-        groupByDate(upcoming).forEach(function(grp){ renderWorkerDay(grp); });
+        var heroJob = null;
+        for(var hidx=0; hidx<upcoming.length; hidx++){ if(upcoming[hidx].status !== 'done'){ heroJob = upcoming[hidx]; break; } }
+        if(heroJob) renderHero(heroJob);
+        var rest = upcoming.filter(function(j){ return j !== heroJob; });
+        if(!upcoming.length){ app.appendChild(el('div','empty','No jobs scheduled. Enjoy! 🎉')); }
+        else if(rest.length){
+          app.appendChild(el('div','laterhead', heroJob ? 'Coming up' : 'Your jobs'));
+          groupByDate(rest).forEach(function(grp){ renderWorkerDay(grp); });
+        }
         if(past.length){
           var h2 = el('h2',null,'Previous days'); app.appendChild(h2);
           groupByDate(past).reverse().forEach(function(grp){ renderWorkerDay(grp, true); });
@@ -245,6 +291,42 @@
         rb.onclick=function(){ loadWorker(); };
         if(!document.querySelector('.refresh')) document.body.appendChild(rb);
       }).catch(function(){ app.innerHTML=''; app.appendChild(el('div','empty','Could not load. Check your internet and try again.')); });
+    }
+    function heroNavUrl(j){
+      var stops = jobStops(j);
+      return routeUrl(stops) || (stops[0] && stopMapsUrl(stops[0]));
+    }
+    function renderHero(j){
+      var dl = dayLabel(j.job_date);
+      var card = el('div','hero');
+      card.appendChild(el('div','hl','Your next job'));
+      card.appendChild(el('div','hwhen', dl.label + (dl.badge ? ' \u00b7 ' + dl.badge : '')));
+      card.appendChild(el('div','htime', hm(j.start_time)));
+      card.appendChild(el('div','hcust', j.customer_name));
+      jobStops(j).forEach(function(s){
+        var u = stopMapsUrl(s);
+        var row = el(u ? 'a' : 'div','hstop');
+        if(u){ row.href=u; row.target='_blank'; row.rel='noopener'; }
+        row.appendChild(el('span','hi', stopIcon(s.label)));
+        var t = el('span','ht');
+        t.appendChild(el('span','hlab', s.label));
+        t.appendChild(el('span','had', stopText(s) || 'Open in Google Maps'));
+        row.appendChild(t);
+        if(u) row.appendChild(el('span','harr','\u203a'));
+        card.appendChild(row);
+      });
+      if(j.notes) card.appendChild(el('div','hnotes', j.notes));
+      var nav = heroNavUrl(j);
+      if(nav){ var nb=el('a','hnav','\ud83e\udded Start navigation'); nb.href=nav; nb.target='_blank'; nb.rel='noopener'; card.appendChild(nb); }
+      if(j.phone){
+        var hr = el('div','hrow');
+        var pc = el('a',null,'\ud83d\udcde Call customer'); pc.href='tel:'+j.phone.split(' ').join(''); hr.appendChild(pc);
+        card.appendChild(hr);
+      }
+      var done = el('button','hdone','\u2713 Mark as done');
+      done.onclick=function(){ mark(j.id,true); };
+      card.appendChild(done);
+      app.appendChild(card);
     }
     function renderWorkerDay(grp, isPast){
       var dl = dayLabel(grp.date);
